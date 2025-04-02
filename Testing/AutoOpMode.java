@@ -105,7 +105,7 @@ public class AutoOpMode extends OpMode {
         telemetry.update();
     }
     
-    public double DriveSE(double start, double end, double speed_l, double speed_r) {
+    public double DriveStartEnd(double start, double end, double speed_l, double speed_r) {
         if ((runtime.milliseconds() >= start) && (runtime.milliseconds() <= end)) { // Between start time and end time, set drivetrain motors to desired power
             d_motor_l.setPower(speed_l);
             d_motor_r.setPower(speed_r);
@@ -117,7 +117,7 @@ public class AutoOpMode extends OpMode {
         return end+100.0; // return the time for when current process is finished
     }
 
-    publc double Drive(double start, double deltaTime, double speed_l, double speed_r) {
+    public double Drive(double start, double deltaTime, double speed_l, double speed_r) {
         if ((runtime.milliseconds() >= start) && (runtime.milliseconds() <= start+deltaTime)) {
             d_motor_l.setPower(speed_l);
             d_motor_r.setPower(speed_r);
@@ -129,7 +129,7 @@ public class AutoOpMode extends OpMode {
     }
 
     public double SetDriveVelocity(double start, double deltaTime, double velocity) {
-        if ((runtime.milliseconds() => start) && (runtime.milliseconds() <= start+deltaTime)) {
+        if ((runtime.milliseconds() >= start) && (runtime.milliseconds() <= start+deltaTime)) {
             d_motor_l.setVelocity(velocity);
             d_motor_r.setVelocity(velocity);
         } else if ((runtime.milliseconds() > start+deltaTime) && (runtime.milliseconds() <= start+deltaTime+100)) {
@@ -146,17 +146,13 @@ public class AutoOpMode extends OpMode {
         }
     }
     
-    public double DriveDistance(double start, double distance, double power) {
-        double deltaTime = CalcDistanceTime(distance, power); // Get the estimated time to travel the desired distance.
-        if ((runtime.milliseconds() >= start) && (runtime.milliseconds() <= start+deltaTime)) { // Set power of motor for desired time
-            d_motor_l.setPower(power);
-            d_motor_r.setPower(power);
-        } if ((runtime.milliseconds() > start+deltaTime) && (runtime.milliseconds() <= start+deltaTime+100)) { // After driving has ended, hault motors
-            d_motor_l.setPower(0);
-            d_motor_r.setPower(0);
-        }
-        return start+deltaTime+100; // Return estimated end time
-    }
+    public double DriveDistance(double start, double distance, double speedCMS) {
+		double[] timeTpsOut = CalcDistanceTPSRunningTime(distance, speedCMS);
+		double motorPoweredTime = timeTpsOut[0];
+		double motorVelocity = timeTpsOut[0];
+		
+		return SetDriveVelocity(start, motorPoweredTime, motorVelocity);
+	}
 
     public double CalcVelocity(double distance, double time) {
         double distancePerRotationCM = 9*Math.PI;
@@ -164,9 +160,27 @@ public class AutoOpMode extends OpMode {
         double distancePerClick = distancePerRotationCM/ticksPerRotation;
         return (distance/distancePerClick)/(time/1000);
     }
+	
+	public double[] CalcDistanceTPSRunningTime(double distance, double cms) {
+		double rollingForce = 0.0; // Force opposing forward rolling of the robot
+		double robotMass = 0.0;
+		double stoppingDistance = (robotMass*Math.pow(cms, 2))/(2*rollingForce);
+		
+		double output[] = new double[2];
+		double runningTime = (distance/cms) - (stoppingDistance/(cms/2));
+		double tpsSpeed =  VelocityCMStoTPS(cms);
+		output[0] = runningTime;
+		output[1] = tpsSpeed;
+		return output;
+	}
+	
+	public double VelocityCMStoTPS(double cms) {
+		double constant = 2.43;
+		return (cms*28*5*4)/(9*Math.PI*constant);
+	}
     
     public double TankTurn(double startTime, double deltaTime, double speed, boolean antiClock) {
-        // If clockwise desied, set motors to desired speed for desired time but make right motor spinn backwards
+        // If clockwise desired, set motors to desired speed for desired time but make right motor spinn backwards
         if (antiClock == false) {
             Drive(startTime, startTime+deltaTime, speed, (-1.0 * speed));
         } else { // Opposite of clockwise
