@@ -163,14 +163,14 @@ public class AutoOpMode extends OpMode {
 	
 	public double[] CalcDistanceTPSRunningTime(double distance, double cms) {
 		double rollingForce = 0.0; // Force opposing forward rolling of the robot
-		double robotMass = 0.0;
-		double stoppingDistance = (robotMass*Math.pow((cms/100), 2))/(2*rollingForce);
-		double stoppingTime = (robotMass*(cms/100))/rollingForce;
+		double robotMass = 0.0; // Mass of the robot in kg
+		double stoppingDistance = (robotMass*Math.pow((cms/100), 2))/(2*rollingForce); // Stopping distance by rearangement of E=(1/2)mv^2 and E=Fd
+		double stoppingTime = (robotMass*(cms/100))/rollingForce; // Time to stop by rearangement of v=u+at and F=ma
 		
 		double output[] = new double[2];
-		double runningTime = (distance/cms) - stoppingTime;
+		double runningTime = (distance/cms) - stoppingTime/2;
 		double tpsSpeed =  VelocityCMStoTPS(cms);
-		output[0] = runningTime;
+		output[0] = runningTime*1000;
 		output[1] = tpsSpeed;
 		return output;
 	}
