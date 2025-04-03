@@ -165,9 +165,10 @@ public class AutoOpMode extends OpMode {
 		double rollingForce = 0.0; // Force opposing forward rolling of the robot
 		double robotMass = 0.0;
 		double stoppingDistance = (robotMass*Math.pow((cms/100), 2))/(2*rollingForce);
+		double stoppingTime = (robotMass*(cms/100))/rollingForce;
 		
 		double output[] = new double[2];
-		double runningTime = (distance/cms) - ((stoppingDistance*100)/(cms/2));
+		double runningTime = (distance/cms) - stoppingTime;
 		double tpsSpeed =  VelocityCMStoTPS(cms);
 		output[0] = runningTime;
 		output[1] = tpsSpeed;
